@@ -93,9 +93,10 @@ function makeHouse(x,z,scale=1,turn=0) {
   villageBox(.55,1,.55,stoneMat,1.55,4, -.8,house);
   return house;
 }
-makeHouse(-10,-10,1.1,.35);
-makeHouse(11,-13,.9,-.25);
-makeHouse(-14,10,.82,.65);
+makeHouse(-4,-9,1.15,.35);
+makeHouse(5,-13,1.0,-.25);
+makeHouse(-12,5,.95,.65);
+makeHouse(13,7,.9,-.45);
 // Worn dirt road through the village
 const road = new THREE.Mesh(new THREE.PlaneGeometry(8,48), villageMaterial(0x8b7959));
 road.rotation.x=-Math.PI/2; road.position.set(0,.025,-2); scene.add(road);
@@ -114,12 +115,12 @@ function makeLantern(x,z){
   const lamp=new THREE.Mesh(new THREE.BoxGeometry(.48,.55,.48),warmWindow); lamp.position.set(x,2.65,z); scene.add(lamp);
   const light=new THREE.PointLight(0xffa94f,1.1,8); light.position.set(x,2.7,z); scene.add(light);
 }
-makeLantern(-4,-2); makeLantern(4,-8); makeLantern(4,8);
+makeLantern(-4,-2); makeLantern(4,-8); makeLantern(4,8); makeLantern(-5,-12);
 // A small stone well in the village square
 const well = new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.25,.8,12),stoneMat);
-well.position.set(7,.4,2); well.castShadow=true; well.receiveShadow=true; scene.add(well);
+well.position.set(3,.4,-2); well.castShadow=true; well.receiveShadow=true; scene.add(well);
 const water = new THREE.Mesh(new THREE.CircleGeometry(.92,16),new THREE.MeshStandardMaterial({color:0x426d7a,metalness:.25,roughness:.25}));
-water.rotation.x=-Math.PI/2; water.position.set(7,.83,2); scene.add(water);
+water.rotation.x=-Math.PI/2; water.position.set(3,.83,-2); scene.add(water);
 
 const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(1.15, 0), new THREE.MeshStandardMaterial({ color: 0x756b68, roughness: 1 }));
 stone.position.set(5, 1, -8);
