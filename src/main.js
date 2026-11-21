@@ -76,10 +76,33 @@ function makeHouse(x,z,scale=1,turn=0) {
   // timber frame
   for (const px of [-2.35,2.35]) villageBox(.22,3.35,.24,wood,px,1.65,2.03,house);
   villageBox(4.9,.2,.24,wood,0,2.95,2.03,house);
-  // steep two-sided roof
-  const roofA = new THREE.Mesh(new THREE.BoxGeometry(3.05,.22,4.65),roofMat);
-  roofA.position.set(-.78,3.55,0); roofA.rotation.z=-.55; roofA.castShadow=true; house.add(roofA);
-  const roofB = roofA.clone(); roofB.position.x=.78; roofB.rotation.z=.55; house.add(roofB);
+  // Proper gabled roof: two sloping planes meet along the ridge.
+  // Roof slopes down toward the left and right eaves, with the ridge running front-to-back.
+  const roofShape = new THREE.BufferGeometry();
+  const roofVerts = new Float32Array([
+    -2.9,3.12,-2.45,  0,4.85,-2.45,  0,4.85,2.45,
+    -2.9,3.12,-2.45,  0,4.85,2.45,  -2.9,3.12,2.45,
+     0,4.85,-2.45,  2.9,3.12,2.45,  0,4.85,2.45,
+     0,4.85,-2.45,  2.9,3.12,-2.45,  2.9,3.12,2.45
+  ]);
+  roofShape.setAttribute('position',new THREE.BufferAttribute(roofVerts,3));
+  roofShape.computeVertexNormals();
+  const roofMesh = new THREE.Mesh(roofShape,new THREE.MeshStandardMaterial({color:0x49383a,roughness:.92,side:THREE.DoubleSide}));
+  roofMesh.castShadow=true; roofMesh.receiveShadow=true; house.add(roofMesh);
+  // Thick fascia boards along both eaves and the ridge cap.
+  villageBox( .16,.16,4.95,wood,-2.86,3.1,0,house);
+  villageBox( .16,.16,4.95,wood, 2.86,3.1,0,house);
+  villageBox( .18,.16,4.95,roofMat,0,4.86,0,house);
+  // Roof tiles as narrow strips following each slope.
+  for(let side of [-1,1]) {
+    for(let row=0;row<5;row++) {
+      const t=(row+1)/5;
+      const x=side*t*2.72;
+      const y=4.82-t*1.62;
+      const tile=villageBox(1.05,.055,4.72,roofMat,x,y,0,house);
+      tile.rotation.z=side*Math.atan2(1.62,2.72);
+    }
+  }
   // front door and windows
   villageBox(1.05,2,.16,wood,0,1,2.1,house);
   villageBox(.68,1.35,.05,plaster,0,1.05,2.2,house);
