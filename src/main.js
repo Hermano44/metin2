@@ -59,18 +59,55 @@ stone.castShadow = true;
 scene.add(stone);
 
 const player = new THREE.Group();
-const body = new THREE.Mesh(new THREE.CapsuleGeometry(.42, .85, 4, 8), new THREE.MeshStandardMaterial({ color: 0x9b2930, roughness: .8 }));
-body.position.y = 1.05;
-body.castShadow = true;
-player.add(body);
-const head = new THREE.Mesh(new THREE.SphereGeometry(.3, 12, 10), new THREE.MeshStandardMaterial({ color: 0xd3a47c }));
-head.position.y = 1.85;
-head.castShadow = true;
-player.add(head);
-const sword = new THREE.Mesh(new THREE.BoxGeometry(.09, .9, .13), new THREE.MeshStandardMaterial({ color: 0xc5cbd0, metalness: .7, roughness: .3 }));
-sword.position.set(.48, 1.1, -.05);
-sword.rotation.z = -.25;
-player.add(sword);
+const armor = new THREE.MeshStandardMaterial({ color: 0x87343b, metalness: .28, roughness: .62 });
+const darkSteel = new THREE.MeshStandardMaterial({ color: 0x303b49, metalness: .72, roughness: .32 });
+const steel = new THREE.MeshStandardMaterial({ color: 0xb9c4ce, metalness: .82, roughness: .24 });
+const skin = new THREE.MeshStandardMaterial({ color: 0xc99570, roughness: .9 });
+const leather = new THREE.MeshStandardMaterial({ color: 0x493126, roughness: .95 });
+function part(geometry, material, position, rotation = null) {
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(...position);
+  if (rotation) mesh.rotation.set(...rotation);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  player.add(mesh);
+  return mesh;
+}
+// Boots and legs
+part(new THREE.BoxGeometry(.34,.42,.42), leather, [-.23,.24,0]);
+part(new THREE.BoxGeometry(.34,.42,.42), leather, [.23,.24,0]);
+part(new THREE.CylinderGeometry(.17,.2,.58,7), darkSteel, [-.23,.72,0]);
+part(new THREE.CylinderGeometry(.17,.2,.58,7), darkSteel, [.23,.72,0]);
+// Armored torso, waist and chest plate
+part(new THREE.CylinderGeometry(.36,.48,.82,8), armor, [0,1.35,0]);
+part(new THREE.BoxGeometry(.76,.18,.48), leather, [0,.96,0]);
+part(new THREE.BoxGeometry(.58,.62,.12), darkSteel, [0,1.4,.27]);
+part(new THREE.BoxGeometry(.16,.62,.055), steel, [0,1.4,.345]);
+part(new THREE.BoxGeometry(.58,.12,.07), steel, [0,1.68,.34]);
+// Shoulders and arms
+part(new THREE.SphereGeometry(.27,8,7), steel, [-.49,1.72,0]);
+part(new THREE.SphereGeometry(.27,8,7), steel, [.49,1.72,0]);
+part(new THREE.CylinderGeometry(.13,.17,.55,7), armor, [-.55,1.3,0], [0,0,-.12]);
+part(new THREE.CylinderGeometry(.13,.17,.55,7), armor, [.55,1.3,0], [0,0,.12]);
+part(new THREE.SphereGeometry(.14,8,7), skin, [-.58,1.0,0]);
+part(new THREE.SphereGeometry(.14,8,7), skin, [.58,1.0,0]);
+// Head, hair and simple warrior helmet
+part(new THREE.SphereGeometry(.27,12,10), skin, [0,2.02,0]);
+part(new THREE.SphereGeometry(.285,10,7,0,Math.PI*2,0,Math.PI*.55), leather, [0,2.12,0]);
+part(new THREE.BoxGeometry(.58,.12,.38), steel, [0,2.18,0]);
+part(new THREE.ConeGeometry(.12,.32,6), steel, [0,2.38,0]);
+// Sword in right hand
+const weapon = new THREE.Group();
+const blade = new THREE.Mesh(new THREE.BoxGeometry(.105,.92,.055), steel);
+blade.position.y = .53; weapon.add(blade);
+const guard = new THREE.Mesh(new THREE.BoxGeometry(.42,.075,.12), darkSteel);
+guard.position.y = .08; weapon.add(guard);
+const grip = new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.28,7), leather);
+grip.position.y = -.09; weapon.add(grip);
+weapon.position.set(.7,.82,-.02);
+weapon.rotation.z = -.2;
+weapon.traverse(o => { if (o.isMesh) o.castShadow = true; });
+player.add(weapon);
 scene.add(player);
 
 let cameraAngle = 0;
