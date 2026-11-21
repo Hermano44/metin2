@@ -71,49 +71,85 @@ function villageBox(w,h,d,mat,x,y,z, parent=scene) {
   m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
 }
 function makeHouse(x,z,scale=1,turn=0) {
-  const house = new THREE.Group(); house.position.set(x,0,z); house.rotation.y=turn; house.scale.setScalar(scale); scene.add(house);
-  villageBox(5,3.1,4,plaster,0,1.55,0,house);
-  // timber frame
-  for (const px of [-2.35,2.35]) villageBox(.22,3.35,.24,wood,px,1.65,2.03,house);
-  villageBox(4.9,.2,.24,wood,0,2.95,2.03,house);
-  // Proper gabled roof: two sloping planes meet along the ridge.
-  // Roof slopes down toward the left and right eaves, with the ridge running front-to-back.
-  const roofShape = new THREE.BufferGeometry();
-  const roofVerts = new Float32Array([
-    -2.9,3.12,-2.45,  0,4.85,-2.45,  0,4.85,2.45,
-    -2.9,3.12,-2.45,  0,4.85,2.45,  -2.9,3.12,2.45,
-     0,4.85,-2.45,  2.9,3.12,2.45,  0,4.85,2.45,
-     0,4.85,-2.45,  2.9,3.12,-2.45,  2.9,3.12,2.45
-  ]);
-  roofShape.setAttribute('position',new THREE.BufferAttribute(roofVerts,3));
-  roofShape.computeVertexNormals();
-  const roofMesh = new THREE.Mesh(roofShape,new THREE.MeshStandardMaterial({color:0x49383a,roughness:.92,side:THREE.DoubleSide}));
-  roofMesh.castShadow=true; roofMesh.receiveShadow=true; house.add(roofMesh);
-  // Thick fascia boards along both eaves and the ridge cap.
-  villageBox( .16,.16,4.95,wood,-2.86,3.1,0,house);
-  villageBox( .16,.16,4.95,wood, 2.86,3.1,0,house);
-  villageBox( .18,.16,4.95,roofMat,0,4.86,0,house);
-  // Roof tiles as narrow strips following each slope.
-  for(let side of [-1,1]) {
-    for(let row=0;row<5;row++) {
-      const t=(row+1)/5;
-      const x=side*t*2.72;
-      const y=4.82-t*1.62;
-      const tile=villageBox(1.05,.055,4.72,roofMat,x,y,0,house);
-      tile.rotation.z=side*Math.atan2(1.62,2.72);
+  const house = new THREE.Group();
+  house.position.set(x,0,z); house.rotation.y=turn; house.scale.setScalar(scale); scene.add(house);
+  const darkWood = villageMaterial(0x38251d);
+  const redWood = villageMaterial(0x70402b);
+  const paper = villageMaterial(0xd9c9a4);
+  const roofTile = new THREE.MeshStandardMaterial({color:0x263849,roughness:.78,metalness:.12,side:THREE.DoubleSide});
+  const gold = villageMaterial(0xb58b4b);
+  // Raised timber foundation and plaster wall panels.
+  villageBox(5.5,.38,4.5,stoneMat,0,.28,0,house);
+  villageBox(5.05,2.65,4.05,paper,0,1.78,0,house);
+  // Exposed dark timber frame.
+  for(const px of [-2.42,0,2.42]) villageBox(.2,3,.22,darkWood,px,1.75,2.08,house);
+  for(const zz of [-1.95,0,1.95]) villageBox(5,.18,.2,darkWood,0,3.02,zz,house);
+  // Deep front veranda.
+  villageBox(5.35,.18,.72,redWood,0,.58,2.45,house);
+  for(const px of [-2.25,2.25]) villageBox(.16,2.35,.16,darkWood,px,1.75,2.7,house);
+  // Sliding shoji-style entrance with wooden lattice.
+  villageBox(1.65,2.05,.12,darkWood,0,1.55,2.16,house);
+  for(const px of [-.37,.37]) {
+    villageBox(.68,1.82,.055,paper,px,1.56,2.24,house);
+    for(let k=0;k<5;k++) villageBox(.035,1.78,.035,redWood,px-.27+k*.135,1.56,2.28,house);
+    for(let k=0;k<5;k++) villageBox(.66,.035,.035,redWood,px, .83+k*.36,2.28,house);
+  }
+  // Warm lattice windows on either side of the entrance.
+  for(const wx of [-1.72,1.72]) {
+    villageBox(.92,1.12,.1,darkWood,wx,1.95,2.15,house);
+    villageBox(.72,.92,.045,warmWindow,wx,1.95,2.22,house);
+    for(let k=0;k<5;k++) villageBox(.035,.96,.035,redWood,wx-.3+k*.15,1.95,2.26,house);
+    for(let k=0;k<5;k++) villageBox(.76,.035,.035,redWood,wx,1.95-.38+k*.19,2.26,house);
+  }
+  // Japanese-inspired irimoya roof: broad tiled slopes with gently lifted eaves.
+  function roofHalf(side) {
+    const verts=[], indices=[];
+    const nx=12,nz=16;
+    for(let i=0;i<=nx;i++) {
+      const t=i/nx, xx=t*3.45;
+      for(let j=0;j<=nz;j++) {
+        const v=j/nz, zz=-3.05+v*6.1;
+        const lift=.34*Math.pow(Math.abs(2*v-1),7) + .10*Math.pow(t,5);
+        const yy=4.95-1.62*Math.pow(t,1.12)+lift;
+        verts.push(side*xx,yy,zz);
+      }
+    }
+    for(let i=0;i<nx;i++) for(let j=0;j<nz;j++) {
+      const p=i*(nz+1)+j, q=p+nz+1;
+      if(side===1) indices.push(p,q,p+1,q,q+1,p+1);
+      else indices.push(p,p+1,q,q,p+1,q+1);
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+    geo.setIndex(indices); geo.computeVertexNormals();
+    const mesh=new THREE.Mesh(geo,roofTile);
+    mesh.castShadow=true; mesh.receiveShadow=true; house.add(mesh);
+    // Raised ceramic tile seams running from ridge to eaves.
+    for(let row=1;row<=7;row++) {
+      const t=row/8, xx=side*t*3.45;
+      const yy=4.95-1.62*Math.pow(t,1.12)+.34*.5**7;
+      const seam=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,6.05,5),darkWood);
+      seam.rotation.x=Math.PI/2; seam.position.set(xx,yy+.035,0); house.add(seam);
     }
   }
-  // front door and windows
-  villageBox(1.05,2,.16,wood,0,1,2.1,house);
-  villageBox(.68,1.35,.05,plaster,0,1.05,2.2,house);
-  for (const wx of [-1.55,1.55]) {
-    villageBox(.82,.9,.12,wood,wx,1.9,2.1,house);
-    villageBox(.62,.7,.06,warmWindow,wx,1.9,2.18,house);
-    villageBox(.08,.9,.08,wood,wx,1.9,2.23,house);
-    villageBox(.82,.08,.08,wood,wx,1.9,2.23,house);
+  roofHalf(-1); roofHalf(1);
+  // Ridge cap, heavy eave beams and decorative end caps.
+  const ridge=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,6.25,10),darkWood);
+  ridge.rotation.x=Math.PI/2; ridge.position.set(0,4.98,0); ridge.castShadow=true; house.add(ridge);
+  for(const side of [-1,1]) {
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,6.35,8),redWood);
+    beam.rotation.x=Math.PI/2; beam.position.set(side*3.38,3.48,0); beam.castShadow=true; house.add(beam);
+    for(const zz of [-3.08,3.08]) {
+      const fin=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),gold);
+      fin.position.set(side*3.38,3.65,zz); house.add(fin);
+    }
   }
-  // chimney
-  villageBox(.55,1,.55,stoneMat,1.55,4, -.8,house);
+  // Decorative gable panel visible from the front.
+  const gable=new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([
+    new THREE.Vector2(-2.35,0),new THREE.Vector2(0,1.45),new THREE.Vector2(2.35,0)
+  ])),redWood);
+  gable.position.set(0,3.05,2.09); house.add(gable);
+  villageBox(.12,.9,.12,darkWood,0,3.65,2.18,house);
   return house;
 }
 makeHouse(-4,-9,1.15,.35);
