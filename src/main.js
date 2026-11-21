@@ -29,11 +29,16 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-const grid = new THREE.GridHelper(180, 45, 0x536644, 0x71845c);
-grid.position.y = 0.015;
-grid.material.transparent = true;
-grid.material.opacity = 0.16;
-scene.add(grid);
+// Natural terrain: subtle rolling ground instead of a visible debug grid.
+const terrain = ground.geometry;
+const pos = terrain.attributes.position;
+for (let i=0;i<pos.count;i++) {
+  const x=pos.getX(i), z=pos.getY(i);
+  const h=(Math.sin(x*.11)+Math.cos(z*.13))*.22 + Math.sin((x+z)*.07)*.18;
+  pos.setZ(i,h);
+}
+terrain.computeVertexNormals();
+
 
 function makeTree(x, z, scale = 1) {
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.16, .23, 1.6, 7), new THREE.MeshStandardMaterial({ color: 0x60452c }));
@@ -47,11 +52,74 @@ function makeTree(x, z, scale = 1) {
   crown.castShadow = true;
   scene.add(crown);
 }
-for (let i = 0; i < 34; i++) {
-  const a = (i / 34) * Math.PI * 2;
-  const r = 17 + (i % 4) * 2.2;
-  makeTree(Math.cos(a) * r, Math.sin(a) * r, .8 + (i % 3) * .16);
+for (let i = 0; i < 54; i++) {
+  const a = (i / 54) * Math.PI * 2;
+  const r = 25 + (i % 5) * 2.4;
+  makeTree(Math.cos(a) * r, Math.sin(a) * r, .85 + (i % 3) * .18);
 }
+
+function villageMaterial(color, roughness = .9) {
+  return new THREE.MeshStandardMaterial({ color, roughness });
+}
+const wood = villageMaterial(0x493021);
+const plaster = villageMaterial(0xb7a17b);
+const roofMat = villageMaterial(0x49383a);
+const stoneMat = villageMaterial(0x77766d);
+const warmWindow = new THREE.MeshStandardMaterial({ color: 0xffc66e, emissive: 0xff8a24, emissiveIntensity: .65 });
+function villageBox(w,h,d,mat,x,y,z, parent=scene) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+  m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+function makeHouse(x,z,scale=1,turn=0) {
+  const house = new THREE.Group(); house.position.set(x,0,z); house.rotation.y=turn; house.scale.setScalar(scale); scene.add(house);
+  villageBox(5,3.1,4,plaster,0,1.55,0,house);
+  // timber frame
+  for (const px of [-2.35,2.35]) villageBox(.22,3.35,.24,wood,px,1.65,2.03,house);
+  villageBox(4.9,.2,.24,wood,0,2.95,2.03,house);
+  // steep two-sided roof
+  const roofA = new THREE.Mesh(new THREE.BoxGeometry(3.05,.22,4.65),roofMat);
+  roofA.position.set(-.78,3.55,0); roofA.rotation.z=-.55; roofA.castShadow=true; house.add(roofA);
+  const roofB = roofA.clone(); roofB.position.x=.78; roofB.rotation.z=.55; house.add(roofB);
+  // front door and windows
+  villageBox(1.05,2,.16,wood,0,1,2.1,house);
+  villageBox(.68,1.35,.05,plaster,0,1.05,2.2,house);
+  for (const wx of [-1.55,1.55]) {
+    villageBox(.82,.9,.12,wood,wx,1.9,2.1,house);
+    villageBox(.62,.7,.06,warmWindow,wx,1.9,2.18,house);
+    villageBox(.08,.9,.08,wood,wx,1.9,2.23,house);
+    villageBox(.82,.08,.08,wood,wx,1.9,2.23,house);
+  }
+  // chimney
+  villageBox(.55,1,.55,stoneMat,1.55,4, -.8,house);
+  return house;
+}
+makeHouse(-10,-10,1.1,.35);
+makeHouse(11,-13,.9,-.25);
+makeHouse(-14,10,.82,.65);
+// Worn dirt road through the village
+const road = new THREE.Mesh(new THREE.PlaneGeometry(8,48), villageMaterial(0x8b7959));
+road.rotation.x=-Math.PI/2; road.position.set(0,.025,-2); scene.add(road);
+const road2 = new THREE.Mesh(new THREE.PlaneGeometry(38,7), villageMaterial(0x8b7959));
+road2.rotation.x=-Math.PI/2; road2.position.set(0,.03,0); scene.add(road2);
+// Stone edging and scattered paving stones
+for(let i=0;i<28;i++){
+  const z=-23+i*1.65;
+  for(const side of [-1,1]){
+    const pebble=new THREE.Mesh(new THREE.DodecahedronGeometry(.22+(i%3)*.04,0),stoneMat);
+    pebble.position.set(side*(4.3+(i%2)*.18),.12,z); pebble.scale.y=.45; pebble.castShadow=true; scene.add(pebble);
+  }
+}
+function makeLantern(x,z){
+  const post=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,2.7,7),wood); post.position.set(x,1.35,z); post.castShadow=true; scene.add(post);
+  const lamp=new THREE.Mesh(new THREE.BoxGeometry(.48,.55,.48),warmWindow); lamp.position.set(x,2.65,z); scene.add(lamp);
+  const light=new THREE.PointLight(0xffa94f,1.1,8); light.position.set(x,2.7,z); scene.add(light);
+}
+makeLantern(-4,-2); makeLantern(4,-8); makeLantern(4,8);
+// A small stone well in the village square
+const well = new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.25,.8,12),stoneMat);
+well.position.set(7,.4,2); well.castShadow=true; well.receiveShadow=true; scene.add(well);
+const water = new THREE.Mesh(new THREE.CircleGeometry(.92,16),new THREE.MeshStandardMaterial({color:0x426d7a,metalness:.25,roughness:.25}));
+water.rotation.x=-Math.PI/2; water.position.set(7,.83,2); scene.add(water);
 
 const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(1.15, 0), new THREE.MeshStandardMaterial({ color: 0x756b68, roughness: 1 }));
 stone.position.set(5, 1, -8);
