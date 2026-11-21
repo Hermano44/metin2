@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#101820">
+  <title>Metin2 - MMORPG Prototipi</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <div id="game">
+    <div class="topbar">
+      <div class="brand">METIN <span>YENİDEN</span></div>
+      <div class="status">● ÇEVRİMDIŞI PROTOTİP</div>
+    </div>
+    <div class="character-panel">
+      <div class="avatar">⚔</div>
+      <div class="stats">
+        <strong>Gezgin</strong>
+        <div class="bar hp"><span></span></div>
+        <div class="bar mp"><span></span></div>
+        <small>Seviye 1 · Savaşçı</small>
+      </div>
+    </div>
+    <div id="loading">Dünya hazırlanıyor...</div>
+    <div class="bottom-hud">
+      <div class="hint">Hareket etmek için sol kontrolü kullan</div>
+      <div class="action-slots"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+    </div>
+    <div id="joystick"><div id="stick"></div></div>
+    <div id="look-area" aria-label="Kamerayı döndür"></div>
+    <div class="help">Ekranın sağ tarafını sürükleyerek kamerayı döndür</div>
+  </div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
